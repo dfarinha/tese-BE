@@ -1,6 +1,5 @@
 # Master thesis
-
-Node.js authentication tutorial using Passport.js
+ 
 
 ### Prerequisites
 
