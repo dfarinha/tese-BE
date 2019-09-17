@@ -1,5 +1,5 @@
-# Master thesis
- 
+# Master thesis - Blockchain
+
 
 ### Prerequisites
 
