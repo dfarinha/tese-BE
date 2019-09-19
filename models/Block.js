@@ -17,4 +17,4 @@ const BlocksSchema = new schema({
     hash = String,
 });
 
-var Blocks = mongoose.model('Block', BlocksSchema);
+mongoose.model('Block', BlocksSchema);
