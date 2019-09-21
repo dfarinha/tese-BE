@@ -41,7 +41,9 @@ mongoose.connect(
 mongoose.set("debug", true);
 
 //Models & routes
-require("./models/Users");
+require("./models/UsersModel");
+require("./models/BlockModel");
+require("./models/ChainModel");
 require("./config/passport");
 app.use(require("./routes"));
 
@@ -50,26 +52,31 @@ app.use(require("./routes"));
 //Error handlers & middlewares
 if (!isProduction) {
   app.use((err, req, res) => {
-    res.status(err.status || 500);
-
-    res.json({
-      errors: {
-        message: err.message,
-        error: err
-      }
-    });
+    if (res.status) {
+      
+      res.status(err.status || 500);
+  
+      res.json({
+        errors: {
+          message: err.message,
+          error: err
+        }
+      });
+    }else res()
   });
 }
 
 app.use((err, req, res) => {
-  res.status(err.status || 500);
-
-  res.json({
-    errors: {
-      message: err.message,
-      error: {}
-    }
-  });
+  if (res.status) {
+    res.status(err.status || 500);
+  
+    res.json({
+      errors: {
+        message: err.message,
+        error: {}
+      }
+    });
+  }else res()
 });
 
 app.listen(8000, () => console.log("Server running on http://localhost:8000/"));
