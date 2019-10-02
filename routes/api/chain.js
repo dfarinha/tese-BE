@@ -14,9 +14,9 @@ const chains = []
 router.post('/addblock/:id', (req, res) => {
     console.log(req.body);
     const block = new Block({
-        index: req.body.index,
+        index: returnLastIndex(),
         timestamp: Date(),
-        issuer: req.body.timestamp,
+        issuer: req.body.issuer,
         newOwner: req.body.newOwner,
         data: req.body.data,
         dataID: sha256(issuer + data),
@@ -28,7 +28,7 @@ router.post('/addblock/:id', (req, res) => {
     })
     block.save((err,block)=>{
         if (err) {
-            console.log('ERRO saving block');
+            console.log('Error saving block');
             return res.status(400).send()
         }
         res.send('Added')

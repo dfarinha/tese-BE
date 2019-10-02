@@ -28,6 +28,9 @@ class Chain {
     returnLastHash() {
         return this.blocks[this.blocks.length - 1].prevHash;
     }
+    returnLastIndex() {
+        return this.blocks[this.blocks.length -1] + 1
+    }
     save(cb) {
         const chain = new ChainModel(this)
         chain.save((err, chain) => {
