@@ -10,9 +10,6 @@ class Chain {
     addBlock(block) {
         this.blocks.push(block)
     }
-    getBlock(index) {
-        return this.blocks[index]
-    }
     getLatestBlock() {
         return this.blocks[this.blocks.length - 1];
     }
@@ -28,9 +25,6 @@ class Chain {
     returnLastHash() {
         return this.blocks[this.blocks.length - 1].prevHash;
     }
-    returnLastIndex() {
-        return this.blocks[this.blocks.length -1] + 1
-    }
     save(cb) {
         const chain = new ChainModel(this)
         chain.save((err, chain) => {
@@ -39,5 +33,4 @@ class Chain {
 
     }
 }
-
 module.exports = Chain;

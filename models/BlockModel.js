@@ -4,7 +4,6 @@ const { Schema } = mongoose;
 
 
 const BlocksSchema = new Schema({
-    index: Number,
     timestamp: Date,
     issuer: String,
     newOwner : String,

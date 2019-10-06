@@ -4,11 +4,13 @@ const router = require('express').Router();
 const auth = require('../auth');
 const Users = mongoose.model('Users');
 const Chains = mongoose.model('Chain')
-// const Inventory = mongoose.model('Inventory')
+const Inventories = mongoose.model('Inventory')
 const Block = require('./../../classes/blockClass');
 const Chain = require('./../../classes/chainClass');
-const Invent = require('./../../classes/inventoryClass');
+const Inventory = require('./../../classes/inventoryClass');
+const sha256 = require('sha256');
 
+var ObjectID = require('mongodb').ObjectID;
 
 //POST new user route (optional, everyone has access)
 router.post('/', auth.optional, (req, res, next) => {
@@ -46,17 +48,17 @@ router.post('/', auth.optional, (req, res, next) => {
 
       // Logica da chain inicial
       const newChain = new Chain(user._id)
+      
 
       newChain.save((err, chain) => {
         if (err) return console.log(err)
-        const genesisBlock = new Block(0, Date(), 'X', 'Y', 'Z', '0', 0, 0, '0');
+        const genesisBlock = new Block(Date(), 'X', 'Y', 'Z', 0, 0, '0');
         genesisBlock.save(function (err, genesisBlock) {
           if (err) return console.log(err)
-          console.log(genesisBlock)
 
-          newChain.owner = user._id
-          newChain.blocks = [genesisBlock._id]
-          newChain.save(() => {})
+          chain.owner = user._id
+          chain.blocks = [genesisBlock._id]
+          chain.save(() => {})
           res.json({
             user
           })
@@ -66,59 +68,138 @@ router.post('/', auth.optional, (req, res, next) => {
     })
 });
 
-router.post('/addblock/:id', (req, res) => {
-  console.log(req.body);
-  const block = new Block({
-    index: returnLastIndex(),
-    timestamp: Date(),
-    issuer: req.body.timestamp,
-    newOwner: req.body.newOwner,
-    data: req.body.data,
-    dataID: sha256(issuer + data),
-    amount: req.body.amount,
-    value: req.body.amount,
-    prevHash: returnLastHash(),
-    hash: sha256(this.index + this.timestamp + this.issuer + this.newOwner +
-      this.data + this.dataID + this.amount + this.value + this.prevHash)
-  })
-  block.save((err, block) => {
-    if (err) {
-      console.log('Error saving block');
-      return res.status(400).send()
-    }
-    res.send('Added')
-  })
-  //Local memory storage ... 
 
+function farinhaAssincrono(callBack) {
+  setTimeout(() => {
+    console.log('farinha')
+    callBack(null, 'farinha2')
+  }, 3000);
+}
+
+
+farinhaAssincrono(function (err, result) {
+  if (err) {
+    console.log(err);
+
+  } else {
+    console.log(result);
+  }
 })
 
 
 
 ///   *** Populate list chains w/ owner(email) & blocks ***
 router.get('/showchains', auth.optional, (req, res) => {
+
+
   Chains.find().populate('owner', 'email').populate('blocks').exec(function (err, chains) {
     if (err) return console.log(err)
     res.send(chains)
   })
 })
 
-///   **    Add a block to a specific chain   **
-// router.post('/addblock', auth.optional, (req, res) => {
-//   var blockTemp = {''}
-// })
+///   **    Add a block to a specific chain   ** 
+router.post('/addblocktochain', auth.required, (req, res) => {
+  const {
+    payload: {
+      id
+    }
+  } = req;
+
+  Chains.findOne({
+    owner: id
+  }).populate('owner').exec(function (err, chain) {
+
+    var newOwnerName = chain.owner.name
+
+    Chains.findOne({
+      owner: id
+    }).populate('blocks').exec((err, chain) => {
+
+
+      var prevHash = chain.blocks[chain.blocks.length - 1].hash
+
+      var blockTemp = new Block(new Date, newOwnerName, req.body.issuer, req.body.data, req.body.amount, req.body.value, prevHash)
+      blockTemp.save((err, block) => {
+
+        Chains.findOneAndUpdate({
+          owner: id
+        }, {
+          $push: {
+            blocks: block._id
+          }
+        }, (err, chain) => {
+          if (err) {
+            console.log(err)
+            res.send(err)
+          }
+          Users.findOne({
+            name: req.body.issuer
+          }, (err, obj) => {
 
 
 
-// router.get('/abc', auth.optional, (req, res) => {
-//   Users.findOne({ email: 'qwertay@gmail.com' }, function(error, story) {
-//     if (error) {
-//       return handleError(error);
-//     }
-//     story.author = author;
-//     console.log(story.author.name); // prints "Ian Fleming"
-//   });
-//   res.send('abc')
-// })
+            Chains.findOne({
+              owner: obj.id
+            }).populate('blocks').exec((err, chain) => {
+
+
+              var prevHash = chain.blocks[chain.blocks.length - 1].hash
+
+              Users.findOne({
+                name: req.body.issuer
+              })
+              var blockTemp = new Block(new Date, newOwnerName, req.body.issuer, req.body.data, req.body.amount, req.body.value, prevHash)
+              blockTemp.save((err, block) => {
+
+
+                Chains.findOneAndUpdate({
+                  owner: obj.id
+                }, {
+                  $push: {
+                    blocks: block._id
+                  }
+                }, (err, chain) => {
+                  if (err) return res.send(err)
+
+                  return res.send(chain)
+                })
+              })
+            })
+          })
+
+
+        })
+      })
+
+      // Chains.findOne({owner: new ObjectID(id)},(err,chain)=>{
+      //   if(err) return res.send(err)
+      //   console.log(chain);
+
+      //   chain.blocks.push(blockTemp)
+      //   chain.save(_,(err,chain)=>{
+
+      //     return res.send(chain)
+      //   })
+
+      // })
+      // console.log(id);
+
+
+
+    })
+  })
+})
+
+
+
+router.get('/showchains', auth.required, (req, res) => {
+  Chains.find().populate('owner', 'email').populate('blocks').exec(function (err, chains) {
+    if (err) return console.log(err)
+    res.send(chains)
+  })
+})
+
 
 ///////////////////////////////////////////     F I N D 
 
@@ -149,6 +230,9 @@ router.post('/login', auth.optional, (req, res, next) => {
       user
     }
   } = req;
+
+  console.log(user);
+
 
   if (!user.email) {
     return res.status(422).json({

@@ -44,6 +44,7 @@ mongoose.set("debug", true);
 require("./models/UsersModel");
 require("./models/BlockModel");
 require("./models/ChainModel");
+require("./models/InventoryModel");
 require("./config/passport");
 app.use(require("./routes"));
 

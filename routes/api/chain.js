@@ -14,7 +14,6 @@ const chains = []
 router.post('/addblock/:id', (req, res) => {
     console.log(req.body);
     const block = new Block({
-        index: returnLastIndex(),
         timestamp: Date(),
         issuer: req.body.issuer,
         newOwner: req.body.newOwner,
@@ -23,7 +22,7 @@ router.post('/addblock/:id', (req, res) => {
         amount: req.body.amount,
         value: req.body.amount,
         prevHash: returnLastHash(),
-        hash: sha256(this.index + this.timestamp + this.issuer + this.newOwner +
+        hash: sha256(this.timestamp + this.issuer + this.newOwner +
             this.data + this.dataID + this.amount + this.value + this.prevHash)
     })
     block.save((err,block)=>{
@@ -37,18 +36,5 @@ router.post('/addblock/:id', (req, res) => {
 
 })
 
-//      **  Queries the blockchain by blockchain ID  **
-router.get('/blockchain/:id', (req, res) => {
-    res.send(getChainById(req.params.id));
-})
-
-//      **  Creates a new blockchain for a new user  **
-router.post('/newblockchain/:id', (req, res) => {
-    const newChain = new Chain(this.Users.id)
-    const genesisBlock = new Block(0, Date(), 'X', 'Y', 'Z', '0', 0, 0, '0');
-    genesisBlock.save(function (err, genesisBlock) {
-        if (err) return console.log(err)
-    })
-})
 
 module.exports = router;
