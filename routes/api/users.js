@@ -9,6 +9,7 @@ const Block = require('./../../classes/blockClass');
 const Chain = require('./../../classes/chainClass');
 const Inventory = require('./../../classes/inventoryClass');
 const sha256 = require('sha256');
+const Invent = mongoose.model('Inventory')
 
 var ObjectID = require('mongodb').ObjectID;
 
@@ -48,22 +49,33 @@ router.post('/', auth.optional, (req, res, next) => {
 
       // Logica da chain inicial
       const newChain = new Chain(user._id)
-      
+      const newInvent = new Inventory(user._id)
 
-      newChain.save((err, chain) => {
+      newInvent.save((err, inventory) => {
         if (err) return console.log(err)
-        const genesisBlock = new Block(Date(), 'X', 'Y', 'Z', 0, 0, '0');
-        genesisBlock.save(function (err, genesisBlock) {
-          if (err) return console.log(err)
+        inventory.owner = user._id
+        inventory.products = []
+        inventory.save(() => {
+          newChain.save((err, chain) => {
+            if (err) return console.log(err)
+            const genesisBlock = new Block(Date(), 'Genesis Block', 'Genesis Block', 'Genesis Block', 0, 0, '0');
+            genesisBlock.save(function (err, genesisBlock) {
+              if (err) return console.log(err)
 
-          chain.owner = user._id
-          chain.blocks = [genesisBlock._id]
-          chain.save(() => {})
-          res.json({
-            user
+              chain.owner = user._id
+              chain.blocks = [genesisBlock._id]
+              chain.save(() => {})
+              res.json({
+                user
+              })
+            });
           })
-        });
+        })
       })
+
+
+
+
 
     })
 });
@@ -88,9 +100,9 @@ farinhaAssincrono(function (err, result) {
 
 
 
+
 ///   *** Populate list chains w/ owner(email) & blocks ***
 router.get('/showchains', auth.optional, (req, res) => {
-
 
   Chains.find().populate('owner', 'email').populate('blocks').exec(function (err, chains) {
     if (err) return console.log(err)
@@ -116,10 +128,9 @@ router.post('/addblocktochain', auth.required, (req, res) => {
       owner: id
     }).populate('blocks').exec((err, chain) => {
 
-
       var prevHash = chain.blocks[chain.blocks.length - 1].hash
 
-      var blockTemp = new Block(new Date, newOwnerName, req.body.issuer, req.body.data, req.body.amount, req.body.value, prevHash)
+      var blockTemp = new Block(new Date, req.body.issuer, newOwnerName, req.body.data, req.body.amount, req.body.value, prevHash)
       blockTemp.save((err, block) => {
 
         Chains.findOneAndUpdate({
@@ -136,20 +147,15 @@ router.post('/addblocktochain', auth.required, (req, res) => {
           Users.findOne({
             name: req.body.issuer
           }, (err, obj) => {
-
-
-
             Chains.findOne({
               owner: obj.id
             }).populate('blocks').exec((err, chain) => {
-
-
               var prevHash = chain.blocks[chain.blocks.length - 1].hash
 
               Users.findOne({
                 name: req.body.issuer
               })
-              var blockTemp = new Block(new Date, newOwnerName, req.body.issuer, req.body.data, req.body.amount, req.body.value, prevHash)
+              var blockTemp = new Block(new Date, req.body.issuer, newOwnerName, req.body.data, req.body.amount, req.body.value, prevHash)
               blockTemp.save((err, block) => {
 
 
@@ -162,7 +168,23 @@ router.post('/addblocktochain', auth.required, (req, res) => {
                 }, (err, chain) => {
                   if (err) return res.send(err)
 
-                  return res.send(chain)
+
+
+                  Invent.findOneAndUpdate({
+                    owner: req.body.owner
+                  }, {
+                    $pull: {
+                      products: {
+                        _id: req.body.id
+                      }
+                    }
+                  }, (err, obj) => {
+                    if (err) return res.send(err)
+                    return res.send(chain)
+
+                  })
+
+
                 })
               })
             })
@@ -193,11 +215,235 @@ router.post('/addblocktochain', auth.required, (req, res) => {
 
 
 
+
 router.get('/showchains', auth.required, (req, res) => {
   Chains.find().populate('owner', 'email').populate('blocks').exec(function (err, chains) {
     if (err) return console.log(err)
     res.send(chains)
   })
+})
+
+
+
+//      *** show user's chains ***
+router.get('/showchain', auth.required, (req, res) => {
+
+  const {
+    payload: {
+      id
+    }
+  } = req;
+
+  Chains.findOne({
+    owner: id
+  }).populate('blocks').exec(function (err, chains) {
+    res.send(chains)
+  })
+
+
+
+})
+
+//    *** show partner's chains
+
+
+router.get('/showpartnerchains', auth.required, (req, res) => {
+  const {
+    payload: {
+      id
+    }
+  } = req;
+
+  Users.findById(id, function (err, user) {
+    if (err) {
+      console.log(err);
+      return res.send(err)
+    }
+    Chains.find({
+      'owner': {
+        $in: user.partners
+      }
+    }).populate('blocks').populate('owner').exec(function (err, inv) {
+      if (err) return console.log(err)
+      console.log(inv)
+      res.send(inv)
+    })
+  })
+})
+
+
+//    ** return logged user
+router.get('/returnlogged', auth.required, (req, res) => {
+  const {
+    payload: {
+      id
+    }
+  } = req;
+
+  Users.findById(id, function (err, user) {
+    if (err) {
+      console.log(err)
+      return res.send(err)
+    }
+    return res.send(user)
+  })
+
+
+})
+
+router.get('/getuser/:id', auth.required, (req, res) => {
+  Users.findById(req.params.id).exec(function (err, user) {
+    if (err) return console.log(err)
+    res.send(user)
+  })
+})
+
+router.post('/updatecountry', auth.required, (req, res) => {
+
+  const {
+    payload: {
+      id
+    }
+  } = req;
+
+  Users.findOneAndUpdate({
+    _id: id
+  }, {
+    country: req.body.country
+  }, (err, user) => {
+    if (err) return res.send(err)
+
+    console.log('entrou')
+    return res.send(user)
+
+  })
+
+})
+router.post('/updatelocation', auth.required, (req, res) => {
+
+  const {
+    payload: {
+      id
+    }
+  } = req;
+
+  Users.findOneAndUpdate({
+    _id: id
+  }, {
+    location: req.body.location
+  }, (err, user) => {
+    if (err) return res.send(err)
+
+    console.log('entrou')
+    return res.send(user)
+
+  })
+
+})
+router.post('/updatecellphone', auth.required, (req, res) => {
+
+  const {
+    payload: {
+      id
+    }
+  } = req;
+
+  Users.findOneAndUpdate({
+    _id: id
+  }, {
+    cellphone: req.body.cellphone
+  }, (err, user) => {
+    if (err) return res.send(err)
+
+    console.log('entrou')
+    return res.send(user)
+
+  })
+
+})
+router.post('/updateaddress', auth.required, (req, res) => {
+
+  const {
+    payload: {
+      id
+    }
+  } = req;
+
+  Users.findOneAndUpdate({
+    _id: id
+  }, {
+    address: req.body.address
+  }, (err, user) => {
+    if (err) return res.send(err)
+
+    console.log('entrou')
+    return res.send(user)
+
+  })
+
+})
+router.post('/updatezip', auth.required, (req, res) => {
+
+  const {
+    payload: {
+      id
+    }
+  } = req;
+
+  Users.findOneAndUpdate({
+    _id: id
+  }, {
+    postal: req.body.postal
+  }, (err, user) => {
+    if (err) return res.send(err)
+
+    console.log('entrou')
+    return res.send(user)
+
+  })
+
+})
+router.post('/updatekey', auth.required, (req, res) => {
+
+  const {
+    payload: {
+      id
+    }
+  } = req;
+
+  Users.findOneAndUpdate({
+    _id: id
+  }, {
+    key: req.body.key
+  }, (err, user) => {
+    if (err) return res.send(err)
+
+    console.log('entrou')
+    return res.send(user)
+
+  })
+
+})
+router.post('/updateaffiliate', auth.required, (req, res) => {
+
+  const {
+    payload: {
+      id
+    }
+  } = req;
+
+  Users.findOneAndUpdate({
+    _id: id
+  }, {
+    affiliate: req.body.affiliate
+  }, (err, user) => {
+    if (err) return res.send(err)
+
+    console.log('entrou')
+    return res.send(user)
+
+  })
+
 })
 
 
@@ -219,9 +465,6 @@ router.get('/showchains', auth.required, (req, res) => {
 
 ///////////////////////////////////////////
 
-router.get('/tre', (req, res) => {
-  res.send('here');
-})
 
 //POST login route (optional, everyone has access)
 router.post('/login', auth.optional, (req, res, next) => {
@@ -268,6 +511,15 @@ router.post('/login', auth.optional, (req, res, next) => {
 
     return res.status(403).send('Wrong Credentials')
   })(req, res, next);
+});
+
+router.get('/logout', function (req, res) {
+  console.log('logout');
+
+  req.logout();
+  res.send({
+    'message': "OK"
+  });
 });
 
 //GET current route (required, only authenticated users have access)

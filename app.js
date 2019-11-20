@@ -43,6 +43,7 @@ mongoose.set("debug", true);
 //Models & routes
 require("./models/UsersModel");
 require("./models/BlockModel");
+require("./models/FinalModel");
 require("./models/ChainModel");
 require("./models/InventoryModel");
 require("./config/passport");

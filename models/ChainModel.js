@@ -5,8 +5,8 @@ const { Schema } = mongoose;
 
 
 const ChainsSchema = new Schema({
-    blocks: [{ type: Schema.Types.ObjectId, ref: 'Block'}],
-    owner: { type: Schema.Types.ObjectId, ref: 'Users'}
+    owner: { type: Schema.Types.ObjectId, ref: 'Users'},
+    blocks: [{ type: Schema.Types.ObjectId, ref: 'Block'}]
 })
 
 

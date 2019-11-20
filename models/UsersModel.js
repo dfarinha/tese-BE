@@ -8,6 +8,13 @@ const UsersSchema = new Schema({
   email: String,
   name: String,
   partners: [{ type: Schema.Types.ObjectId, ref: 'Users'}],
+  location: String,
+  address: String,
+  country: String,
+  cellphone: String,
+  postal: String,
+  key: String,
+  affiliate: String,
   hash: String,
   salt: String
 });

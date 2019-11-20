@@ -1,23 +1,29 @@
-const mongoose = require('mongoose');
-const InventoryModel = mongoose.model('Inventory');
+const mongoose = require("mongoose");
+const InventoryModel = mongoose.model("Inventory");
 
 class Inventory {
-    constructor(id) {
-        this.id = id
-        this.products = []
+    constructor(id = undefined) {
+        this.products = [];
+        if (id) {
+            this.id = id;
+        }
     }
-
     newProduct(name, amount, value) {
-        this.name = name;
-        this.amount = amount;
-        this.value = value
+        return {
+            name,
+            amount,
+            value
+        }
+    }
+    addProduct(name, amount, value){
+        this.products.push(this.newProduct(name, amount, value))
     }
 
     save(cb) {
-        const inventory = new InventoryModel(this)
+        const inventory = new InventoryModel(this);
         inventory.save((err, inventory) => {
-            cb(err, inventory)
-        })
+            cb(err, inventory);
+        });
     }
 }
 
