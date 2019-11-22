@@ -41,7 +41,7 @@ nodemon app.js
 
 ## Authors
 
-* **Diogo Farinha
+* Diogo Farinha
 
 ## Acknowledgments
 
