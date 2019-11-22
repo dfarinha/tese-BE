@@ -25,17 +25,24 @@ To run the app (dev. mode)
 npm start
 ```
 
-## Built With
+To run the app with nodemon (automatically restarts the node application when file changes in the directory are detected)
+
+```
+nodemon app.js
+```
+
+## Built With (most relevant)
 
 * [Node.js](https://nodejs.org) - The backend framework used
 * [Express.js](https://github.com/expressjs/express) - Node.js framework used
 * [MongoDB](https://www.mongodb.com/) - Database platform used
+* [Passportjs](http://www.passportjs.org) - Authentication middleware for Node.js
 
 
 ## Authors
 
-* **Antonio Erdeljac** - *Initial work* - [Passport-Tutorial](https://github.com/AntonioErdeljac/Blog-Tutorial)
+* **Diogo Farinha
 
 ## Acknowledgments
 
-* This was a tutorial for my [Medium article](https://medium.com/p/4a56ed18e81e)
+* [Nuno Carvalhão](https://nunocarvalhao.com)
